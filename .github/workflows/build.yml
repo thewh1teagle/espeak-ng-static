@@ -5,33 +5,33 @@ on:
 
 jobs:
   build:
-    name: ${{ matrix.archive }}
+    name: ${{ matrix.bin }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - platform: "macos-14" # macOS arm64
-            archive: "espeak-ng-static-macos-arm64.tar.gz"
+            bin: "espeak-ng-static-macos-arm64"
             extra-cmake-args: ""
 
           - platform: "macos-13" # macOS x86-64
-            archive: "espeak-ng-static-macos-x86_64.tar.gz"
+            bin: "espeak-ng-static-macos-amd64"
             extra-cmake-args: ""
 
           - platform: "ubuntu-20.04" # Linux x86_64
-            archive: "espeak-ng-static-linux-x86_64.tar.gz"
+            bin: "espeak-ng-static-linux-amd64"
             extra-cmake-args: ""
 
           - platform: "ubuntu-20.04" # Linux arm64
-            archive: "espeak-ng-static-linux-arm64.tar.gz"
+            bin: "espeak-ng-static-linux-arm64"
             extra-cmake-args: ""
 
           - platform: "windows-latest" # Windows x86_64
-            archive: "espeak-ng-static-windows-x86_64.tar.gz"
+            bin: "espeak-ng-static-windows-amd64"
             extra-cmake-args: ""
 
           - platform: "windows-latest" # Windows arm64
-            archive: "espeak-ng-static-windows-arm64.tar.gz"
+            bin: "espeak-ng-static-windows-arm64"
             extra-cmake-args: "-A ARM64"
 
     runs-on: ${{ matrix.platform }}
@@ -46,7 +46,7 @@ jobs:
           echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-g++" >> $GITHUB_ENV
           echo "CC=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
           echo "CXX=aarch64-linux-gnu-g++" >> $GITHUB_ENV
-        if: matrix.archive == 'espeak-ng-static-linux-arm64.tar.gz'
+        if: matrix.bin == 'espeak-ng-static-linux-arm64.tar.gz'
 
       - name: Build espeakng-loader
         run: |
@@ -56,9 +56,9 @@ jobs:
         env:
           EXTRA_CMAKE_ARGS: ${{ matrix.extra-cmake-args }}
 
-      - name: Create archive
+      - name: Create bin
         run: |
-          mv espeak-ng/espeak-ng-static.tar.gz ${{ matrix.archive }}
+          mv ./espeak-ng-static* ${{ matrix.bin }}
         shell: bash
 
       - name: Prepare espeak-ng-data
@@ -82,7 +82,7 @@ jobs:
       - name: Uplaod to releases
         run: |
           latestTag=$(gh release view --json tagName --jq '.tagName')
-          gh release upload $latestTag ${{ matrix.archive }} --clobber
+          gh release upload $latestTag ${{ matrix.bin }} --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash

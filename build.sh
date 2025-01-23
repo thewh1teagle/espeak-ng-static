@@ -13,13 +13,16 @@ cmake --build build --config Release
 cmake --install build
 
 # Package for Windows
-mv _install espeak-ng-static
 
-# Show package contents
-echo "Package Contents:"
-echo "================="
-tree espeak-ng-static 2>/dev/null || echo "Unable to display contents. Make sure the 'tree' command is installed."
-
-# Create the tarball
-tar -czf espeak-ng-static.tar.gz espeak-ng-static
-echo "espeak-ng-static.tar.gz created"
+# Package for Windows
+if [[ "$(uname -s)" =~ MINGW|MSYS|CYGWIN ]]; then
+    ls _install/bin
+    ls _install
+    mv _install/bin/espeak-ng.exe ../espeak-ng-static.exe
+else
+    # Package for Unix
+    # cp _static/lib/libespeak-ng.a _dynamic/lib
+    # Package the libraries
+    mv _install/bin/espeak-ng ../espeak-ng-static
+    chmod +x espeak-ng
+fi
