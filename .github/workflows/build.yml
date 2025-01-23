@@ -27,11 +27,11 @@ jobs:
             extra-cmake-args: ""
 
           - platform: "windows-latest" # Windows x86_64
-            bin: "espeak-ng-static-windows-amd64"
+            bin: "espeak-ng-static-windows-amd64.exe"
             extra-cmake-args: ""
 
           - platform: "windows-latest" # Windows arm64
-            bin: "espeak-ng-static-windows-arm64"
+            bin: "espeak-ng-static-windows-arm64.exe"
             extra-cmake-args: "-A ARM64"
 
     runs-on: ${{ matrix.platform }}
