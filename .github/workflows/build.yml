@@ -1,0 +1,96 @@
+name: Publish espeak-ng-static
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.archive }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: "macos-14" # macOS arm64
+            archive: "espeak-ng-static-macos-arm64.tar.gz"
+            extra-cmake-args: ""
+
+          - platform: "macos-13" # macOS x86-64
+            archive: "espeak-ng-static-macos-x86_64.tar.gz"
+            extra-cmake-args: ""
+
+          - platform: "ubuntu-20.04" # Linux x86_64
+            archive: "espeak-ng-static-linux-x86_64.tar.gz"
+            extra-cmake-args: ""
+
+          - platform: "ubuntu-20.04" # Linux arm64
+            archive: "espeak-ng-static-linux-arm64.tar.gz"
+            extra-cmake-args: ""
+
+          - platform: "windows-latest" # Windows x86_64
+            archive: "espeak-ng-static-windows-x86_64.tar.gz"
+            extra-cmake-args: ""
+
+          - platform: "windows-latest" # Windows arm64
+            archive: "espeak-ng-static-windows-arm64.tar.gz"
+            extra-cmake-args: "-A ARM64"
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Linux arm64 toolchain
+        run: |
+          sudo apt-get install g++-aarch64-linux-gnu
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-g++" >> $GITHUB_ENV
+          echo "CC=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+          echo "CXX=aarch64-linux-gnu-g++" >> $GITHUB_ENV
+        if: matrix.archive == 'espeak-ng-static-linux-arm64.tar.gz'
+
+      - name: Build espeakng-loader
+        run: |
+          git clone --single-branch --depth 1 -b 1.52.0 https://github.com/espeak-ng/espeak-ng
+          ./build.sh
+        shell: bash
+        env:
+          EXTRA_CMAKE_ARGS: ${{ matrix.extra-cmake-args }}
+
+      - name: Create archive
+        run: |
+          mv espeak-ng/espeak-ng-static.tar.gz ${{ matrix.archive }}
+        shell: bash
+
+      - name: Prepare espeak-ng-data
+        run: |
+          cd espeak-ng
+          rm -rf build
+          cmake -B build . -DCMAKE_INSTALL_PREFIX=_espeak_ng_data -DCOMPILE_INTONATIONS=ON
+          cmake --build build
+          cmake --install build
+          
+          cd ..
+          mv espeak-ng/_espeak_ng_data/share/espeak-ng-data ./espeak-ng-data
+          tar -czf espeak-ng-data.tar.gz espeak-ng-data
+          latestTag=$(gh release view --json tagName --jq '.tagName')
+          gh release upload $latestTag espeak-ng-data.tar.gz --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        if: matrix.platform == 'macos-14'
+
+      - name: Uplaod to releases
+        run: |
+          latestTag=$(gh release view --json tagName --jq '.tagName')
+          gh release upload $latestTag ${{ matrix.archive }} --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+  checksum:
+    runs-on: macos-latest
+    needs: build
+    steps:
+      - name: Checksums Action
+        uses: thewh1teagle/checksum@v1
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
