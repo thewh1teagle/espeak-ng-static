@@ -24,5 +24,5 @@ else
     # cp _static/lib/libespeak-ng.a _dynamic/lib
     # Package the libraries
     mv _install/bin/espeak-ng ../espeak-ng-static
-    chmod +x espeak-ng
+    chmod +x espeak-ng-static
 fi
