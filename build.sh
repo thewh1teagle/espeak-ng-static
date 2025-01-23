@@ -23,6 +23,6 @@ else
     # Package for Unix
     # cp _static/lib/libespeak-ng.a _dynamic/lib
     # Package the libraries
+    chmod +x _install/bin/espeak-ng
     mv _install/bin/espeak-ng ../espeak-ng-static
-    chmod +x espeak-ng-static
 fi
